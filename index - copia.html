@@ -1,59 +1,92 @@
-Notepad++ v8.7.5 regression-fixes, bug-fixes & enhancements:
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distribuidor de Alimentos por Macros</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    input, button, textarea { width: 100%; margin: 10px 0; padding: 8px; }
+    .resultado { margin-top: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 10px; background: #f9f9f9; }
+    .comida { margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <h1>Distribuidor de Alimentos por Macros</h1>
 
- 1. Fix nfo file losing modification issue (regression from v8.7.4).
- 2. Fix network file wrong modification detection (regression from v8.7.1).
- 3. Fix regression "Open Selected PathName(s)" command not working while all selected.
- 4. Fix unusuability after deleting files in split view.
- 5. Fix unsaved documents lost on next launch if portable Notepad++ change path.    
- 6. Refactoring for the better performance & smaller binary size.
- 7. Improve "Copy Selected Lines" command.
- 8. Add Visual Basic function list.
- 9. Add Swift, TypeScript, and Go for advanced Auto-indent.
-10. Fix UDL comment line not working due to conflict with stream comment definition.
-11. Enhance "Follow current doc." GUI action/option in Find in files.
-12. Fix Reload Workspace not working.
-13. Add "Show details" functionality in installer.
+  <label>Proteínas (g):</label>
+  <input type="number" id="proteinas" placeholder="Ej: 120" />
 
+  <label>Carbohidratos (g):</label>
+  <input type="number" id="carbohidratos" placeholder="Ej: 200" />
 
-Notepad++ v8.7.4 regression-fix & bug-fixes:
+  <label>Grasas (g):</label>
+  <input type="number" id="grasas" placeholder="Ej: 70" />
 
-1. Fix regression of multi-line tabbar height not updated after closing tabs.
-2. Fix the extension defined by user not override language default extensions.
-3. Fix encoding of nfo file cannot be changed bug.
+  <label>Alimentos que deseas consumir (separados por coma):</label>
+  <textarea id="alimentos" placeholder="Ej: pollo asado, arroz, frijoles, huevo, leche, chocolate"></textarea>
 
+  <button onclick="distribuirAlimentos()">Distribuir comidas</button>
 
-Notepad++ v8.7.3 bug-fixes & new features :
+  <div class="resultado" id="resultado"></div>
 
-1. Fix a crash while disabling "Pin tab" feature.
-2. Fix drag&drop a folder in Notepad++ launch redundant dialog regression.
-3. Fix docked panels invisibility in multi-instance mode.
-4. Add "Pin/Unpin Tab" context menu item.
-5. Add "Close All BUT Pinned" command.
-6. Fix a possible buffer overflow issue.
+  <script>
+    const baseAlimentos = {
+      "pollo asado": { p: 27, c: 0, g: 3 },
+      "arroz": { p: 2.7, c: 28, g: 0.3 },
+      "frijoles": { p: 8.9, c: 27, g: 0.5 },
+      "huevo": { p: 13, c: 1.1, g: 11 },
+      "leche": { p: 3.4, c: 5, g: 3.3 },
+      "chocolate": { p: 7.8, c: 59, g: 30 }
+    };
 
+    function distribuirAlimentos() {
+      const proteinas = parseFloat(document.getElementById("proteinas").value);
+      const carbohidratos = parseFloat(document.getElementById("carbohidratos").value);
+      const grasas = parseFloat(document.getElementById("grasas").value);
+      const alimentosTexto = document.getElementById("alimentos").value.toLowerCase();
+      const alimentos = alimentosTexto.split(",").map(a => a.trim()).filter(Boolean);
 
-Notepad++ v8.7.2 new features & bug-fixes:
+      const comidas = ["Desayuno", "Almuerzo", "Cena", "Meriendas"];
+      const distribucion = {};
 
-1. Add Pin tab feature.
-2. Tabbar enhancement: Hide inactive tab Close & Pin buttons.  
-3. Tabbar enhancement: Highlight inactive darken tab on mouse hover.
-4. Fix Ctrl-C not doing copy from Search result issue.
-5. Add "Minimize / Close to" option for System tray.
-6. Add ability to open/copy selected files from Search-results.
-7. Fix replace field focus losing when Notepad++ is switched back.
+      comidas.forEach(comida => distribucion[comida] = []);
 
+      const totalMacros = { p: 0, c: 0, g: 0 };
 
-Get more info on
-https://notepad-plus-plus.org/downloads/v8.7.5/
+      alimentos.forEach(alimento => {
+        const info = baseAlimentos[alimento];
+        if (info) {
+          totalMacros.p += info.p;
+          totalMacros.c += info.c;
+          totalMacros.g += info.g;
+        }
+      });
 
+      const factorP = proteinas / totalMacros.p;
+      const factorC = carbohidratos / totalMacros.c;
+      const factorG = grasas / totalMacros.g;
+      const factor = Math.min(factorP || 0, factorC || 0, factorG || 0);
 
-Included plugins:
+      alimentos.forEach((alimento, i) => {
+        const info = baseAlimentos[alimento];
+        if (!info) return;
+        const porcion = {
+          alimento,
+          gramos: Math.round(100 * factor)
+        };
+        const comida = comidas[i % 4];
+        distribucion[comida].push(porcion);
+      });
 
-1.  NppExport v0.4
-2.  Converter v4.6
-3.  Mime Tool v3.1
-
-
-Updater (Installer only):
-
-* WinGUp (for Notepad++) v5.3.1
+      const resultadoDiv = document.getElementById("resultado");
+      resultadoDiv.innerHTML = "<h2>Distribución sugerida:</h2>";
+      comidas.forEach(comida => {
+        resultadoDiv.innerHTML += `<div class="comida"><strong>${comida}:</strong><ul>` +
+          distribucion[comida].map(p => `<li>${p.gramos}g de ${p.alimento}</li>`).join("") +
+          `</ul></div>`;
+      });
+    }
+  </script>
+</body>
+</html>
